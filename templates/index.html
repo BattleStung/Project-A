@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Customer Support Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .settings-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reply-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .reply-section.hidden {
+            display: none;
+        }
+
+        .reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reply-header h3 {
+            color: #2d3748;
+            font-size: 18px;
+        }
+
+        .copy-button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .copy-button:hover {
+            background: #38a169;
+        }
+
+        .reply-text {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            color: #2d3748;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .settings-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Customer Support Assistant</h1>
+            <p>Generate professional customer replies instantly</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalReplies">0</div>
+                <div class="stat-label">Total Replies</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="accuracyRate">100%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="editedCount">0</div>
+                <div class="stat-label">User Edits</div>
+            </div>
+        </div>
+
+        <form id="replyForm">
+            <div class="settings-row">
+                <div class="form-group">
+                    <label for="businessName">Business Name</label>
+                    <input type="text" id="businessName" value="Support Team" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="tone">Tone</label>
+                    <select id="tone">
+                        <option value="professional">Professional</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="casual">Casual</option>
+                        <option value="empathetic">Empathetic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <select id="industry">
+                        <option value="general business">General Business</option>
+                        <option value="e-commerce">E-commerce</option>
+                        <option value="SaaS">SaaS/Tech</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="finance">Finance</option>
+                        <option value="education">Education</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerMessage">Customer Message</label>
+                <textarea 
+                    id="customerMessage" 
+                    placeholder="Paste the customer's message here..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="addSignature" checked>
+                    <label for="addSignature" style="margin-bottom: 0;">Add business signature</label>
+                </div>
+            </div>
+
+            <button type="submit" class="button" id="generateButton">
+                ✨ Generate Reply
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #718096;">Generating your reply...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="reply-section hidden" id="replySection">
+            <div class="reply-header">
+                <h3>📝 Generated Reply</h3>
+                <button type="button" class="copy-button" id="copyButton">
+                    📋 Copy to Clipboard
+                </button>
+            </div>
+            <div class="reply-text" id="replyText" contenteditable="true"></div>
+            <p style="margin-top: 10px; font-size: 12px; color: #718096;">
+                💡 Tip: Click the text above to edit. Your edits help improve the AI.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentReply = '';
+        let currentMessage = '';
+        let originalReply = '';
+
+        // Load stats on page load
+        loadStats();
+
+        // Form submission
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await generateReply();
+        });
+
+        // Copy button
+        document.getElementById('copyButton').addEventListener('click', () => {
+            const replyText = document.getElementById('replyText').innerText;
+            navigator.clipboard.writeText(replyText).then(() => {
+                showSuccess('Reply copied to clipboard!');
+            });
+        });
+
+        // Track edits
+        document.getElementById('replyText').addEventListener('blur', async (e) => {
+            const editedReply = e.target.innerText;
+            if (editedReply !== originalReply) {
+                await submitFeedback(currentMessage, originalReply, editedReply);
+                loadStats(); // Refresh stats
+            }
+        });
+
+        async function generateReply() {
+            const customerMessage = document.getElementById('customerMessage').value;
+            const businessName = document.getElementById('businessName').value;
+            const tone = document.getElementById('tone').value;
+            const industry = document.getElementById('industry').value;
+            const addSignature = document.getElementById('addSignature').checked;
+
+            // Show loading state
+            document.getElementById('generateButton').disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('replySection').classList.add('hidden');
+            hideMessages();
+
+            try {
+                const response = await fetch('/api/generate-reply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: customerMessage,
+                        business_name: businessName,
+                        tone: tone,
+                        industry: industry,
+                        add_signature: addSignature
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentMessage = customerMessage;
+                    currentReply = data.reply;
+                    originalReply = data.reply;
+                    
+                    document.getElementById('replyText').innerText = data.reply;
+                    document.getElementById('replySection').classList.remove('hidden');
+                    
+                    // Refresh stats
+                    loadStats();
+                } else {
+                    showError(data.error || 'Failed to generate reply');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                document.getElementById('generateButton').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        async function submitFeedback(customerMessage, originalReply, editedReply) {
+            try {
+                await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customer_message: customerMessage,
+                        original_reply: originalReply,
+                        edited_reply: editedReply
+                    })
+                });
+                showSuccess('Edit saved! This helps improve the AI.');
+            } catch (error) {
+                console.error('Failed to save feedback:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('totalReplies').innerText = stats.total_interactions;
+                    document.getElementById('accuracyRate').innerText = stats.accuracy_rate + '%';
+                    document.getElementById('editedCount').innerText = stats.total_edited;
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.innerText = message;
+            errorEl.classList.add('active');
+            setTimeout(() => errorEl.classList.remove('active'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.innerText = message;
+            successEl.classList.add('active');
+            setTimeout(() => successEl.classList.remove('active'), 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('successMessage').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

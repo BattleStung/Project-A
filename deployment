@@ -1,0 +1,345 @@
+# 🚀 Deployment Guide
+
+Complete guide for deploying your AI Customer Support Assistant to production.
+
+## 📋 Pre-Deployment Checklist
+
+- [ ] Set up Anthropic API key
+- [ ] Configure environment variables
+- [ ] Set up database (for production logging)
+- [ ] Configure domain and SSL
+- [ ] Set up monitoring
+- [ ] Test all endpoints
+- [ ] Set up backup system
+
+## 🌐 Deployment Options
+
+### Option 1: Heroku (Easiest)
+
+1. **Create `Procfile`:**
+```
+web: gunicorn app_production:app
+```
+
+2. **Install Gunicorn:**
+```bash
+pip install gunicorn
+pip freeze > requirements.txt
+```
+
+3. **Deploy:**
+```bash
+heroku create your-app-name
+heroku config:set ANTHROPIC_API_KEY='your-key'
+git push heroku main
+```
+
+### Option 2: AWS EC2
+
+1. **Launch EC2 Instance** (Ubuntu 22.04)
+
+2. **SSH into instance:**
+```bash
+ssh -i your-key.pem ubuntu@your-ip
+```
+
+3. **Install Dependencies:**
+```bash
+sudo apt update
+sudo apt install python3-pip nginx
+pip3 install -r requirements.txt
+```
+
+4. **Set up Systemd Service:**
+Create `/etc/systemd/system/ai-support.service`:
+```ini
+[Unit]
+Description=AI Customer Support Assistant
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ai-support-assistant
+Environment="ANTHROPIC_API_KEY=your-key-here"
+ExecStart=/usr/bin/python3 app_production.py
+
+[Install]
+WantedBy=multi-user.target
+```
+
+5. **Start Service:**
+```bash
+sudo systemctl start ai-support
+sudo systemctl enable ai-support
+```
+
+6. **Configure Nginx:**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Option 3: DigitalOcean App Platform
+
+1. **Connect GitHub Repository**
+
+2. **Configure Build:**
+```yaml
+name: ai-support-assistant
+services:
+- name: web
+  github:
+    repo: your-username/ai-support-assistant
+    branch: main
+  run_command: python app_production.py
+  environment_slug: python
+  envs:
+  - key: ANTHROPIC_API_KEY
+    value: ${ANTHROPIC_API_KEY}
+```
+
+3. **Deploy** via Dashboard
+
+### Option 4: Docker
+
+1. **Create `Dockerfile`:**
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "app_production.py"]
+```
+
+2. **Build and Run:**
+```bash
+docker build -t ai-support-assistant .
+docker run -p 5000:5000 -e ANTHROPIC_API_KEY='your-key' ai-support-assistant
+```
+
+## 🔐 Security Hardening
+
+### 1. Environment Variables
+Never commit API keys. Use environment variables:
+```bash
+export ANTHROPIC_API_KEY='your-key'
+```
+
+### 2. HTTPS/SSL
+Use Let's Encrypt for free SSL:
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+### 3. Rate Limiting
+Add Flask-Limiter:
+```python
+from flask_limiter import Limiter
+
+limiter = Limiter(app, key_func=lambda: request.remote_addr)
+
+@app.route('/api/generate-reply', methods=['POST'])
+@limiter.limit("100/hour")
+def generate_reply():
+    # ...
+```
+
+### 4. Input Validation
+Already implemented in the code - ensure it's enabled.
+
+### 5. CORS Configuration
+Restrict origins in production:
+```python
+CORS(app, origins=['https://your-domain.com'])
+```
+
+## 📊 Monitoring & Analytics
+
+### 1. Application Monitoring
+Use Sentry for error tracking:
+```python
+import sentry_sdk
+sentry_sdk.init(dsn="your-sentry-dsn")
+```
+
+### 2. Performance Monitoring
+```python
+from flask import request
+import time
+
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    duration = time.time() - request.start_time
+    print(f"Request took {duration:.2f}s")
+    return response
+```
+
+### 3. Log Management
+Use cloud logging (CloudWatch, Stackdriver, etc.)
+
+## 💾 Database Migration
+
+For production, move from file-based to database logging:
+
+```python
+# Using PostgreSQL
+from flask_sqlalchemy import SQLAlchemy
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+db = SQLAlchemy(app)
+
+class Interaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    customer_message = db.Column(db.Text)
+    ai_reply = db.Column(db.Text)
+    user_edit = db.Column(db.Text)
+    edited = db.Column(db.Boolean, default=False)
+```
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions Example:
+```yaml
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Deploy to Production
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        # Your deployment script
+```
+
+## 📈 Scaling Strategy
+
+### Stage 1: Single Server (0-1k users)
+- Current setup works fine
+- File-based logging OK
+- Cost: ~$10-20/month
+
+### Stage 2: Load Balanced (1k-10k users)
+- Add load balancer
+- Multiple app servers
+- Centralized database
+- Redis for caching
+- Cost: ~$100-200/month
+
+### Stage 3: Auto-Scaling (10k+ users)
+- Container orchestration (Kubernetes)
+- Auto-scaling groups
+- CDN for static assets
+- Distributed caching
+- Cost: $500+/month
+
+## 🔧 Environment-Specific Configuration
+
+### Development
+```python
+DEBUG = True
+TESTING = True
+DATABASE_URL = 'sqlite:///dev.db'
+```
+
+### Staging
+```python
+DEBUG = True
+TESTING = False
+DATABASE_URL = os.environ.get('STAGING_DATABASE_URL')
+```
+
+### Production
+```python
+DEBUG = False
+TESTING = False
+DATABASE_URL = os.environ.get('DATABASE_URL')
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+```
+
+## 🧪 Pre-Production Testing
+
+```bash
+# Run tests
+pytest tests/
+
+# Load testing
+locust -f load_test.py
+
+# Security scan
+bandit -r .
+
+# Dependency check
+safety check
+```
+
+## 📝 Production Checklist
+
+- [ ] API keys secured in environment variables
+- [ ] HTTPS enabled with valid SSL certificate
+- [ ] Database backups configured
+- [ ] Monitoring and alerting set up
+- [ ] Error tracking enabled (Sentry)
+- [ ] Rate limiting implemented
+- [ ] CORS properly configured
+- [ ] Logging to cloud service
+- [ ] Performance monitoring active
+- [ ] Auto-scaling configured (if needed)
+- [ ] Disaster recovery plan documented
+- [ ] Team access controls defined
+
+## 🆘 Troubleshooting
+
+### High API Costs
+- Implement caching for common queries
+- Add request throttling
+- Monitor usage patterns
+
+### Slow Response Times
+- Add Redis caching
+- Optimize database queries
+- Use CDN for static assets
+
+### High Error Rates
+- Check API key validity
+- Monitor rate limits
+- Review error logs
+
+## 📞 Support
+
+For deployment issues:
+1. Check application logs
+2. Verify environment variables
+3. Test API connectivity
+4. Review Anthropic service status
+
+---
+
+**Remember:** Start simple, scale as needed. Don't over-engineer before you have users.
