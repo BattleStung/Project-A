@@ -1,18 +1,29 @@
-AI Customer Support Assistant (Flask + Claude API)
-This project is a production‑ready backend service for generating automated customer‑support replies using Anthropic Claude (or a built‑in demo fallback). It includes message cleaning, safety filtering, logging, analytics, and a frontend ready to plug into your UI.
+Overview
+The system is designed to support businesses that want to automate customer support while maintaining a natural, human-like communication style. It offers:
+
+Real-time response generation with Claude
+Secure input cleaning and validation
+Configurable tone and industry
+Persistent logging for analytics and training
+User feedback capture
+A ready-to-use REST API
+
 
 Features
-AI‑generated customer support replies using Claude (Sonnet)
-Demo mode when API key is not available
-Input sanitization & basic security filtering
-Configurable tone, industry, and signature
-Logging system (.jsonl) for training & analysis
-User feedback loop (logs edited responses)
-Analytics endpoint to measure accuracy and usage
+
+AI-generated customer support replies using Claude (Sonnet model)
+Demo mode when the Anthropic API key is not available
+Input sanitization and basic security filtering
+Customizable tone, industry, and signature settings
+JSONL logging system for training and historical analysis
+Feedback endpoint for storing edited AI responses
+Analytics endpoint summarizing accuracy and usage metrics
+
 
 Requirements
-Python 3.9+
+
+Python 3.9 or newer
 Flask
 flask-cors
-anthropic
-openai-safe regexes, standard libs
+anthropic Python SDK
+Standard Python libraries (os, json, datetime, re)
