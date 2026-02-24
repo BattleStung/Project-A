@@ -106,7 +106,7 @@ Never make promises the business cannot keep."""
             print("⚠️ WARNING: Using DEMO responses (no API client)")
             return self._generate_demo_response(message)
         
-        print("✅ Calling Claude API...")
+        print(" Calling Claude API...")
         
         try:
             response = anthropic_client.messages.create(
@@ -191,7 +191,7 @@ assistant = AIAssistant()
 @app.route('/')
 def index():
     """Serve the main UI"""
-    api_status = "✅ Connected" if anthropic_client else "⚠️ Demo Mode (Set ANTHROPIC_API_KEY)"
+    api_status = " Connected" if anthropic_client else " Demo Mode (Set ANTHROPIC_API_KEY)"
     return render_template('index.html')
 
 @app.route('/api/generate-reply', methods=['POST'])
@@ -302,13 +302,14 @@ def get_stats():
         }), 500
 
 if __name__ == '__main__':
-    print("🚀 AI Customer Support Assistant Starting...")
-    print("📍 Server running at http://localhost:5000")
-    print("📊 Logs directory: ./logs")
+    print(" AI Customer Support Assistant Starting...")
+    print(" Server running at http://localhost:5000")
+    print(" Logs directory: ./logs")
     
     if anthropic_client:
-        print("✅ Claude API: Connected")
+        print(" Claude API: Connected")
     else:
-        print("⚠️  Claude API: Demo Mode (set ANTHROPIC_API_KEY environment variable)")
+        print("  Claude API: Demo Mode (set ANTHROPIC_API_KEY environment variable)")
     
+
     app.run(debug=True, host='0.0.0.0', port=5000)
